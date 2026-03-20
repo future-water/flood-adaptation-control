@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Large data (upload separately to Zenodo)
+outputs_flood_rl*/
+cache_pooled_return_levels/
+figures_wrr_new/
+shape/
+mass_conservation_summary.csv

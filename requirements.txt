@@ -1,0 +1,12 @@
+exactextract
+geopandas
+joblib
+matplotlib
+numpy
+pandas
+pyarrow
+requests
+scikit-learn
+scipy
+tqdm
+xarray
