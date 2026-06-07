@@ -1,6 +1,6 @@
 # Data-driven flood adaptation control
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20103438.svg)](https://doi.org/10.5281/zenodo.20103438)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20103438-blue)](https://doi.org/10.5281/zenodo.20103438)
 
 Replication code for **"Data-driven control reveals distributed flood adaptation priorities across large river networks under climate change."**
 
