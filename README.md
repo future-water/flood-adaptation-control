@@ -1,5 +1,7 @@
 # Data-driven flood adaptation control
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20103438.svg)](https://doi.org/10.5281/zenodo.20103438)
+
 Replication code for **"Data-driven control reveals distributed flood adaptation priorities across large river networks under climate change."**
 
 ## Pipeline
@@ -49,7 +51,12 @@ Then run notebooks 05 and 06.
 
 ## Data
 
-This repo contains code only. The intermediate data archive
-(`outputs_flood_rl2/`, `shape/`, derived CSVs, ~6 GB total) is published as a
-separate Zenodo dataset record. Extract it next to the notebooks so that all
-relative paths resolve.
+Code and intermediate pipeline outputs (parquet, shapefiles, derived CSVs;
+~7.5 GB total) are archived together on Zenodo (DOI above). Download the
+archive, extract every zip next to the notebooks, place loose CSVs at the
+same level, then run notebooks 05 and 06.
+
+Raw streamflow and precipitation forcings (tens of GB) are not included;
+they come from the ORNL HydroSource record
+(https://hydrosource2.ornl.gov/files/SWA9505V3) and are only needed to
+re-run `04_dmd_lqr_analysis.py` from scratch.
