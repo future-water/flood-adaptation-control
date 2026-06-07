@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Supplementary: Mass Conservation Diagnostic + Fig S5
+Supplementary: Mass Conservation Diagnostic + Fig S2
 =====================================================
 
-Produces mass_conservation_summary.csv and plots Fig S5 (Surrogate Mass Fidelity).
+Produces mass_conservation_summary.csv and plots Fig S2 (Surrogate Mass Fidelity).
 Used by 06_figures_supplementary.ipynb.
 
 Diagnostics:
@@ -813,7 +813,7 @@ def run_diagnostic(gcm: str, hydro: str, ssp: int):
     return summary_row
 
 
-SUMMARY_CSV = OUT_DIR / "mass_conservation_summary.csv"
+SUMMARY_CSV = Path("mass_conservation_summary.csv")
 
 
 def _load_existing_summary() -> pd.DataFrame:
@@ -909,7 +909,7 @@ def main():
 
 
 # ============================================================
-# FIG S5 — Surrogate Mass Fidelity (1×3)
+# FIG S2 — Surrogate Mass Fidelity (1×3)
 # ============================================================
 
 FIG_DIR = Path("figures_wrr_new")
@@ -932,8 +932,8 @@ def _dot_whisker(ax, x_pos, values, color, lw=2.0, ms=7):
     return med
 
 
-def plot_figS5(csv_path=None):
-    """Plot FIG S5 — per-SSP dot-whisker: vol ratio, δ consistency, per-reach δ."""
+def plot_figS2(csv_path=None):
+    """Plot FIG S2 — per-SSP dot-whisker: vol ratio, δ consistency, per-reach δ."""
     import matplotlib as mpl
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     MM = 1/25.4; W_FULL = 190*MM
@@ -1043,5 +1043,5 @@ if __name__ == "__main__":
     main()
     # Plot if summary CSV exists
     if SUMMARY_CSV.exists():
-        print(f"\nPlotting FIG S5...")
-        plot_figS5()
+        print(f"\nPlotting FIG S2...")
+        plot_figS2()

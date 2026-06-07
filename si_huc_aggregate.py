@@ -126,7 +126,7 @@ def main():
     parser.add_argument("--input", required=True,
                         help="Long-format CSV from si_huc_comparison.py")
     parser.add_argument("--mapping", default="comid_huc_mapping_correct.csv")
-    parser.add_argument("--out", default="outputs_huc_comparison/huc_spatial_compact.csv")
+    parser.add_argument("--out", default="huc_spatial_compact.csv")
     parser.add_argument("--budget", type=float, default=10.0,
                         help="Target effort budget in Gm3/yr for picking R_w (default: 10)")
     args = parser.parse_args()
