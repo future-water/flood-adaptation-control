@@ -68,7 +68,6 @@ simulate_openloop = _pipeline.simulate_openloop
 SHP_PATH = DATA / "shape/Flowlines_huc02_12_Brazos.shp"
 DEFAULT_OUT = DATA / "surrogate_fidelity_summary.csv"
 RPS = [2, 5, 10, 20, 50, 100]
-NSE_THRESHOLD = 0.5  # Match figures/supplementary_figures.ipynb
 
 
 def empirical_rl(ams: np.ndarray, T: float) -> float:
@@ -114,22 +113,13 @@ def member_diagnostics(hydro: str, gcm: str, ssp: int,
         X_ref_era = X_ref[:, mask_era]
         X_surr_era = X_surr[:, mask_era]
 
-        # Per-reach NSE for filtering reaches into stream-order aggregates.
-        ss_res = np.sum((X_ref_era - X_surr_era) ** 2, axis=1)
-        ss_tot = np.sum(
-            (X_ref_era - X_ref_era.mean(axis=1, keepdims=True)) ** 2, axis=1
-        ) + 1e-12
-        nse_arr = 1 - ss_res / ss_tot
-        keep_mask = nse_arr >= NSE_THRESHOLD
-
         row: dict = {"hydro": hydro, "gcm": gcm, "ssp": int(ssp),
-                     "n_reaches_total": int(X_ref_era.shape[0]),
-                     "n_reaches_kept": int(keep_mask.sum())}
+                     "n_reaches_total": int(X_ref_era.shape[0])}
 
-        # (b) Basin-aggregate hydrograph: sum across kept reaches at each
+        # (b) Basin-aggregate hydrograph: sum across all reaches at each
         # timestep, then yearly maxima → empirical T-year return level.
-        q_ref_basin = X_ref_era[keep_mask].sum(axis=0)
-        q_surr_basin = X_surr_era[keep_mask].sum(axis=0)
+        q_ref_basin = X_ref_era.sum(axis=0)
+        q_surr_basin = X_surr_era.sum(axis=0)
         ams_ref_b = np.array([q_ref_basin[years_era == y].max() for y in unique_years])
         ams_surr_b = np.array([q_surr_basin[years_era == y].max() for y in unique_years])
         for rp in RPS:
@@ -137,8 +127,8 @@ def member_diagnostics(hydro: str, gcm: str, ssp: int,
             rl_s = empirical_rl(ams_surr_b, rp)
             row[f"basin_rl{rp}_bias"] = (rl_s - rl_r) / (rl_r + 1e-10)
 
-        # (c) Stream-order aggregate hydrograph (RL10 only, all kept reaches
-        # in that order summed at each timestep).
+        # (c) Stream-order aggregate hydrograph (RL10 only, all reaches of
+        # that order summed at each timestep).
         ref_reach_ids_member = [int(ref.reach_ids[i]) for i in idx_ref]
         cache_key = (hydro, gcm)
         if cache_key not in stream_order_cache:
@@ -148,7 +138,7 @@ def member_diagnostics(hydro: str, gcm: str, ssp: int,
         for order in sorted(set(so_arr)):
             if order <= 0:
                 continue
-            mask_o = (so_arr == order) & keep_mask
+            mask_o = so_arr == order
             if mask_o.sum() == 0:
                 continue
             q_r_o = X_ref_era[mask_o].sum(axis=0)
