@@ -5,9 +5,9 @@ Reads the long-format CSV written by `si_huc_comparison.py`
 (`huc_comparison_{hydro}_{gcm}_ssp{scn}.csv`) and writes
 `huc_spatial_compact.csv` — one row per reach with peak-reduction values at
 each control resolution (reach / HUC12 / HUC10 / HUC8) and HUC outlet flags.
-This is the file consumed by `06_figures_supplementary.ipynb` (FIG S5).
+This is the file drawn as Figure S10 by `figures/figS10_huc_flexibility/make_figure.py`.
 
-Pipeline (mirrors the original analysis notebook, Cell 8):
+Steps:
   1. For each huc_level, find the R_weight whose total effort lies closest to
      a target budget (default 10 Gm3/yr).
   2. Subset the long CSV to those (huc_level, R_weight) rows.
@@ -15,19 +15,24 @@ Pipeline (mirrors the original analysis notebook, Cell 8):
   4. Add HUC8/10/12 labels + outlet flags from the COMID->HUC mapping.
 
 Usage:
-    python si_huc_aggregate.py \\
-        --input outputs_huc_comparison/huc_comparison_VIC5_MPI-ESM1-2-HR_ssp245.csv \\
-        --mapping comid_huc_mapping_correct.csv \\
-        --out outputs_huc_comparison/huc_spatial_compact.csv
+    python analyses/huc_control/si_huc_aggregate.py [--input CSV] [--mapping CSV] [--out CSV]
+
+Defaults, in FAC_DATA_ROOT (see paths.py):
+    --input   outputs_huc_comparison/huc_comparison_VIC5_MPI-ESM1-2-HR_ssp245.csv
+    --mapping comid_huc_mapping_correct.csv
+    --out     huc_spatial_compact.csv   (read by the Figure S10 script)
 """
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths)
+from paths import DATA
 
 HUC_LEVELS = ["reach", "HUC12", "HUC10", "HUC8"]
 
@@ -123,10 +128,11 @@ def attach_huc(result: pd.DataFrame, mapping_csv: Path) -> pd.DataFrame:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", required=True,
+    parser.add_argument("--input",
+                        default=str(DATA / "outputs_huc_comparison/huc_comparison_VIC5_MPI-ESM1-2-HR_ssp245.csv"),
                         help="Long-format CSV from si_huc_comparison.py")
-    parser.add_argument("--mapping", default="comid_huc_mapping_correct.csv")
-    parser.add_argument("--out", default="huc_spatial_compact.csv")
+    parser.add_argument("--mapping", default=str(DATA / "comid_huc_mapping_correct.csv"))
+    parser.add_argument("--out", default=str(DATA / "huc_spatial_compact.csv"))
     parser.add_argument("--budget", type=float, default=10.0,
                         help="Target effort budget in Gm3/yr for picking R_w (default: 10)")
     args = parser.parse_args()

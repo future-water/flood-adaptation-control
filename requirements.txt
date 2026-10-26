@@ -1,12 +1,16 @@
 exactextract
 geopandas
+ipykernel
 joblib
 matplotlib
+nbclient
+nbformat
 numpy
 pandas
 pyarrow
 requests
 scikit-learn
 scipy
+threadpoolctl
 tqdm
 xarray

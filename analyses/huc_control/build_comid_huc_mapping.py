@@ -1,14 +1,14 @@
 """
 Build COMID -> HUC8/HUC10/HUC12 mapping CSV.
 
-Inputs (relative to this script):
+Inputs (shape.zip of the Zenodo record, extracted in FAC_DATA_ROOT, see paths.py):
   shape/Flowlines_huc02_12_Brazos.shp   NHDPlus flowlines clipped to the Brazos
                                         (COMID, TotDASqKM, StreamOrde, REACHCODE,
                                         geometry)
   shape/WBDHU12_Brazos.shp              USGS WBD HUC12 polygons clipped to the
                                         Brazos (huc12, geometry)
 
-Output:
+Output (FAC_DATA_ROOT, where the HUC and stream-order analyses read it):
   comid_huc_mapping_correct.csv         COMID, TotDASqKM, StreamOrde,
                                         HUC8, HUC10, HUC12
 
@@ -19,31 +19,35 @@ Two derivations are computed and compared:
 The script writes (B) by default. Use --method reachcode to write (A) instead.
 
 Usage:
-    python build_comid_huc_mapping.py
-    python build_comid_huc_mapping.py --method reachcode
-    python build_comid_huc_mapping.py --compare  # write both and diff
+    python analyses/huc_control/build_comid_huc_mapping.py
+    python analyses/huc_control/build_comid_huc_mapping.py --method reachcode
+    python analyses/huc_control/build_comid_huc_mapping.py --compare  # write both and diff
 """
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths)
+from paths import DATA
 
-FLOWLINES = Path("shape/Flowlines_huc02_12_Brazos.shp")
+
+FLOWLINES = DATA / "shape/Flowlines_huc02_12_Brazos.shp"
 # WBDHU12 is searched in this order. With the bundled Brazos-clipped layer,
 # 3 flowlines at the basin edge fall outside the polygon coverage (their
 # representative points sit in adjacent HUC8s — Galveston Bay, San Jacinto,
 # Guadalupe). They are dropped from the output; downstream analysis filters
 # them out anyway because they have no streamflow data.
 WBDHU12_CANDIDATES = [
-    Path("shape/WBDHU12.shp"),
-    Path("shape/WBDHU12_Brazos.shp"),
+    DATA / "shape/WBDHU12.shp",
+    DATA / "shape/WBDHU12_Brazos.shp",
 ]
-OUT_CSV = Path("comid_huc_mapping_correct.csv")
+OUT_CSV = DATA / "comid_huc_mapping_correct.csv"
 
 
 def load_flowlines() -> gpd.GeoDataFrame:
@@ -168,7 +172,8 @@ def main():
                         help="Compute both methods and report differences")
     parser.add_argument("--wbd", default=None,
                         help="Path to a WBDHU12 shapefile (defaults to "
-                             "shape/WBDHU12.shp, then shape/WBDHU12_Brazos.shp)")
+                             "shape/WBDHU12.shp, then shape/WBDHU12_Brazos.shp "
+                             "in FAC_DATA_ROOT)")
     parser.add_argument("--out", default=str(OUT_CSV))
     parser.add_argument("--verify", default=None,
                         help="Path to a reference CSV; report row-wise and "

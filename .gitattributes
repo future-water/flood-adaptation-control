@@ -1,0 +1,4 @@
+* text=auto eol=lf
+# Files stored with CRLF line endings; -text keeps git from converting them
+04_dmd_lqr_analysis.py -text
+si_mass_conservation.py -text

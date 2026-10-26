@@ -1,36 +1,37 @@
 """
-Per-member ranking-stability diagnostics for FIG S4 panel (c).
+Per-member ranking-stability diagnostics for Figure S9 panel (c).
 
 For each (gcm, hydro, scenario) member this script
   1. reads only the columns it needs from results_{gcm}.parquet,
-  2. picks two R_weight values (R[3] and R[len(R)//2] — same as the original
-     analysis cell) to represent low- and mid-budget LQR runs,
+  2. picks two R_weight values (R[3] and R[len(R)//2]) to represent low- and mid-budget LQR runs,
   3. computes the Spearman rank correlation and the top-10% overlap of
      per-reach effort between those two R_weights.
 
-Output: ranking_stability.csv (one row per member; ~50 rows total).
+Output: ranking_stability.csv (one row per member; ~50 rows total), written to FAC_DATA_ROOT
+(see paths.py), where figures/supplementary_figures.ipynb reads it.
 
-The original notebook computed these stats by `df_all.groupby(...)` over the
-full ~5 GB long-format parquet, which forced the kernel above the OOM limit.
-This script processes one parquet at a time and never holds more than one
-member's data in memory, so it runs comfortably in <2 GB.
+It processes one parquet at a time, so it runs in under 2 GB of memory.
 
-Usage:
-    python si_ranking_stability.py
-    python si_ranking_stability.py --top-frac 0.10 --out ranking_stability.csv
+Usage (reads FAC_DATA_ROOT/outputs_flood_rl2/ unless --results-dir is given):
+    python analyses/ranking_stability/si_ranking_stability.py
+    python analyses/ranking_stability/si_ranking_stability.py --top-frac 0.10
 """
 from __future__ import annotations
 
 import argparse
 import gc
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths)
+from paths import DATA
 
-RESULT_DIR_DEFAULT = Path("outputs_flood_rl2")
+
+RESULT_DIR_DEFAULT = DATA / "outputs_flood_rl2"
 NEEDED_COLS = ["gcm", "hydro", "scenario", "R_weight", "reach_id", "eff_total_L1"]
 
 
@@ -64,7 +65,7 @@ def main():
     parser.add_argument("--results-dir", default=str(RESULT_DIR_DEFAULT))
     parser.add_argument("--top-frac", type=float, default=0.10,
                         help="Top-N fraction for the overlap metric (default 0.10)")
-    parser.add_argument("--out", default="ranking_stability.csv")
+    parser.add_argument("--out", default=str(DATA / "ranking_stability.csv"))
     args = parser.parse_args()
 
     result_dir = Path(args.results_dir)

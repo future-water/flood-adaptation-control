@@ -11,19 +11,28 @@ by Strahler stream order:
 
 Each qualifying reach gets its own actuator (proper DARE formulation).
 
+Run from the folder 04_dmd_lqr_analysis.py runs in (streamflow/, precipitation/ and
+cache_pooled_return_levels/; the repository root in the default layout).
+
 Usage (band comparison, default):
-    python dmd_lqr_stream_order.py \
+    python analyses/stream_order/dmd_lqr_stream_order.py \
         --gcm MPI-ESM1-2-HR --hydro VIC5 --scenario 245 \
         --bands 1-2 3-4
 
 Usage (cumulative thresholds):
-    python dmd_lqr_stream_order.py \
+    python analyses/stream_order/dmd_lqr_stream_order.py \
         --gcm MPI-ESM1-2-HR --hydro VIC5 --scenario 245 \
         --low-thresholds 1 2 3 --high-thresholds 3 4 5 6 --bands
+
+Reads comid_huc_mapping_correct.csv from FAC_DATA_ROOT. Writes stream_order_<member>.csv,
+stream_order_summary_<member>.csv and stream_order_pareto_<member>.csv to FAC_DATA_ROOT (or --outdir);
+figures/supplementary_figures.ipynb draws Figure S8 from the summary (or pareto) table of
+VIC5_MPI-ESM1-2-HR_ssp245.
 """
 
 import gc
 import os
+import sys
 import argparse
 import warnings
 import time
@@ -37,6 +46,8 @@ from scipy.linalg import solve_discrete_are
 warnings.filterwarnings("ignore")
 
 # ── Import from base pipeline ──
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths, 04_dmd_lqr_analysis.py)
+from paths import DATA
 import importlib as _il
 _pipeline = _il.import_module('04_dmd_lqr_analysis')
 RANK = _pipeline.RANK
@@ -75,7 +86,8 @@ PROF = Profiler()
 # Default column name for Strahler order in NHDPlus attributes
 # ============================================================
 DEFAULT_ORDER_COL = "StreamOrde"
-DEFAULT_MAPPING_CSV = "comid_huc_mapping_correct.csv"
+DEFAULT_MAPPING_CSV = str(DATA / "comid_huc_mapping_correct.csv")
+DEFAULT_OUT_DIR = str(DATA)
 
 # Stream order thresholds to sweep
 DEFAULT_LOW_THRESHOLDS = []      # control order ≤ N
@@ -487,7 +499,7 @@ def run_stream_order_comparison(
     bands: List[Tuple[int, int]] = None,
     mapping_csv: str = DEFAULT_MAPPING_CSV,
     order_col: str = DEFAULT_ORDER_COL,
-    out_dir: str = "outputs_stream_order",
+    out_dir: str = DEFAULT_OUT_DIR,
     include_reach_baseline: bool = True,
 ):
     """
@@ -748,7 +760,7 @@ def run_all_stream_order(
     bands: List[Tuple[int, int]] = None,
     mapping_csv: str = DEFAULT_MAPPING_CSV,
     order_col: str = DEFAULT_ORDER_COL,
-    out_dir: str = "outputs_stream_order",
+    out_dir: str = DEFAULT_OUT_DIR,
 ):
     """Run stream order comparison for multiple scenarios."""
     if bands is None:
@@ -805,8 +817,8 @@ def main():
                         help="Column name for Strahler order in mapping CSV")
     parser.add_argument("--mapping", default=DEFAULT_MAPPING_CSV,
                         help="COMID → stream order mapping CSV")
-    parser.add_argument("--outdir", default="outputs_stream_order",
-                        help="Output directory")
+    parser.add_argument("--outdir", default=DEFAULT_OUT_DIR,
+                        help="Output directory (default: FAC_DATA_ROOT)")
     parser.add_argument("--no-reach-baseline", action="store_true",
                         help="Skip the full reach-level baseline (B=I)")
     args = parser.parse_args()

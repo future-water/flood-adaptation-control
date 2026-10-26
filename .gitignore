@@ -17,9 +17,32 @@ venv/
 .vscode/
 .idea/
 
-# Large data (upload separately to Zenodo)
-outputs_flood_rl*/
-cache_pooled_return_levels/
-figures_wrr_new/
+# Zenodo record extracted in the repository (default FAC_DATA_ROOT; see paths.py)
+outputs_*/
 shape/
-mass_conservation_summary.csv
+*.zip
+/comid_huc_mapping_correct.csv
+/huc_spatial_compact.csv
+/mass_conservation_summary.csv
+/ranking_stability.csv
+/stream_order_*.csv
+/surrogate_fidelity_summary.csv
+/MANIFEST.csv
+/SHA256SUMS.txt
+
+# Raw inputs and pipeline cache (notebooks 01-03, 04_dmd_lqr_analysis.py)
+streamflow/
+precipitation/
+cache_pooled_return_levels/
+
+# Data, raw, work and output roots and build products (see paths.py)
+data/
+raw/
+work/
+outputs/
+analyses/common/build/
+*.dylib
+*.so
+.mplcache/
+logs/
+*.log

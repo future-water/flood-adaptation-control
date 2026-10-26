@@ -1,62 +1,80 @@
-# Data-driven flood adaptation control
+# Data-driven control reveals distributed flood adaptation priorities across large river networks
 
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20103438-blue)](https://doi.org/10.5281/zenodo.20103438)
+[![concept DOI](https://img.shields.io/badge/concept%20DOI-10.5281%2Fzenodo.20103438-blue)](https://doi.org/10.5281/zenodo.20103438)
 
-Replication code for **"Data-driven control reveals distributed flood adaptation priorities across large river networks."**
+Code for the paper of the same title. `04_dmd_lqr_analysis.py` identifies a reduced-order surrogate of the Brazos
+River network (POD and windowed DMDc) from CMIP6-forced streamflow and precipitation and applies threshold-triggered
+LQR control to it for 56 members (7 GCMs × 2 hydrologic models × 4 SSPs). `analyses/<name>/` holds the analyses of
+the Supporting Information, each with a short README, and `figures/` draws every figure; `paths.py` sets the data and
+output folders. The figures, tables and numbers below are drawn in minutes from the derived data on Zenodo; the raw
+forcings are needed only to rerun the computations.
 
-## Pipeline
-
-| Step | File | Description |
-|------|------|-------------|
-| 1 | `01_download_data.ipynb` | Download streamflow & precipitation from HydroSource |
-| 2 | `02_process_streamflow.ipynb` | Process NetCDFs → parquet |
-| 3 | `03_process_precipitation.ipynb` | Process precipitation → parquet |
-| 4 | `04_dmd_lqr_analysis.py` | POD + DMDc + LQR flood control (7 GCMs × 2 hydro × 4 SSPs) |
-| 5 | `05_figures_main.ipynb` | Main manuscript figures |
-| 6 | `06_figures_supplementary.ipynb` | Supplementary figures (S1–S7) |
-
-Supplementary data scripts (run before step 6):
-
-| Script | Output | Used by |
-|--------|--------|---------|
-| `build_comid_huc_mapping.py` | `comid_huc_mapping_correct.csv` | S5 |
-| `si_surrogate_fidelity.py` | `surrogate_fidelity_summary.csv` | S1 (b,c) |
-| `si_ranking_stability.py` | `ranking_stability.csv` | S4 (c) |
-| `si_mass_conservation.py` | `mass_conservation_summary.csv` | S2, S6 (c) |
-| `si_huc_comparison.py` | `outputs_huc_comparison/huc_comparison_*.csv` | S5 |
-| `si_huc_aggregate.py` | `huc_spatial_compact.csv` | S5 |
-| `compute_delta_atten_fraction.py` | `outputs_flood_rl2/delta_atten_per_reach.parquet` | S6 (a,b) |
-| `dmd_lqr_stream_order.py` | `stream_order_{pareto,summary}_*.csv` | S7 (b,c) |
-
-## Usage
+## Setup
 
 ```bash
-pip install -r requirements.txt
-
-# Step 4
-python 04_dmd_lqr_analysis.py --stage all --gcm all --hydro all --rl 2
-
-# SI data (run as needed for each SI panel)
-python build_comid_huc_mapping.py
-python si_surrogate_fidelity.py
-python si_ranking_stability.py
-python si_mass_conservation.py --gcm all --hydro all --ssp all
-python si_huc_comparison.py --gcm MPI-ESM1-2-HR --hydro VIC5 --scenario 245
-python si_huc_aggregate.py --input outputs_huc_comparison/huc_comparison_VIC5_MPI-ESM1-2-HR_ssp245.csv
-python compute_delta_atten_fraction.py --rl 2
-python dmd_lqr_stream_order.py --gcm MPI-ESM1-2-HR --hydro VIC5 --scenario 245 --low-thresholds 1 2 3 4 5 6 7
+conda env create -f environment.yml && conda activate flood-adaptation-control   # or: pip install -r requirements.txt
+export FAC_DATA_ROOT=/path/to/data      # optional; default: repository root
+export FAC_OUT_ROOT=/path/to/outputs    # optional; default: outputs/
 ```
 
-Then run notebooks 05 and 06.
+Download every file of the Zenodo record into `FAC_DATA_ROOT` and extract all zips there, keeping the CSV files at
+its top level; each `outputs_<name>.zip` unpacks to `outputs_<name>/`. A separate data folder keeps the record's
+`README.md` apart from this one. The compiled kernels (`bash analyses/common/build_kernels.sh`; C++ compiler and
+BLAS, see `environment.yml`) are needed only for reruns.
 
-## Data
+## Figures, tables and numbers
 
-Code and intermediate pipeline outputs (parquet, shapefiles, derived CSVs;
-~7.5 GB total) are archived together on Zenodo (DOI above). Download the
-archive, extract every zip next to the notebooks, place loose CSVs at the
-same level, then run notebooks 05 and 06.
+Run the scripts from the repository root (`python <script>`) and the notebooks top to bottom. The notebooks write to
+`FAC_OUT_ROOT/figures/`, the scripts to `FAC_OUT_ROOT/<analysis or figure>/`. Both notebooks also read `shape.zip` and
+`outputs_flood_rl2.zip` in their first cells, also for Figures 2, S5 and S8; the data column names files of the Zenodo
+record.
 
-Raw streamflow and precipitation forcings (tens of GB) are not included;
-they come from the ORNL HydroSource record
-(https://hydrosource2.ornl.gov/files/SWA9505V3) and are only needed to
-re-run `04_dmd_lqr_analysis.py` from scratch.
+| Item | Script | Data |
+|------|--------|------|
+| Figure 1 | schematic, not drawn by code | – |
+| Figure 2 | `figures/main_figures.ipynb` | `outputs_surrogate_comparison.zip` |
+| Figures 3–8 | `figures/main_figures.ipynb` | `outputs_flood_rl2.zip` |
+| Figure S1 | `figures/figS01_rank_sensitivity/make_notebook.py` | `outputs_rank_sensitivity.zip`, `outputs_common.zip` |
+| Figure S2 | `figures/figS02_regularization/make_figure.py` | `outputs_regularization.zip` |
+| Figure S3 | `figures/figS03_window_sensitivity/make_notebook.py` | `outputs_window_sensitivity.zip` |
+| Figure S4 | `figures/supplementary_figures.ipynb` | `outputs_flood_rl2.zip`, `surrogate_fidelity_summary.csv` |
+| Figure S5 | `figures/supplementary_figures.ipynb` | `mass_conservation_summary.csv` |
+| Figure S6 | `figures/figS06_closed_loop/make_figure.py` | `outputs_closed_loop.zip` |
+| Figure S7 | `figures/supplementary_figures.ipynb` | `outputs_flood_rl2.zip` |
+| Figure S8 | `figures/supplementary_figures.ipynb` | `stream_order_{summary,pareto}_VIC5_MPI-ESM1-2-HR_ssp245.csv` |
+| Figure S9 | `figures/supplementary_figures.ipynb` | `outputs_flood_rl2.zip`, `ranking_stability.csv` |
+| Figure S10 | `figures/figS10_huc_flexibility/make_figure.py` (also run by the notebook) | `outputs_huc_control.zip`, `huc_spatial_compact.csv`, `shape.zip` |
+| Figure S11 | `figures/supplementary_figures.ipynb` | `outputs_flood_rl2.zip`, `mass_conservation_summary.csv` |
+| Table 1 | metric definitions, no data | – |
+| Table S1, top and middle | `analyses/rank_sensitivity/table_s1_rank.py` | `outputs_rank_sensitivity.zip` |
+| Table S1, bottom | `analyses/basis_period/summarize_basis.py --basis-years 10`, then `analyses/basis_period/table_s1_bottom.py` | `outputs_basis_period.zip`, `outputs_common.zip` |
+| Table S2 | `analyses/flood_threshold/compare_rl2_rl5.py` | `outputs_flood_threshold.zip` |
+| Tables S1 and S2, checked against the paper | `analyses/si_tables/build_si_tables.py` | as for Tables S1 and S2 |
+| Sections 2.8 and 3.1: closed-loop test | `analyses/si_tables/build_si_tables.py`, `analyses/closed_loop/summarize_fidelity.py --summary-only` | `outputs_closed_loop.zip` |
+| Section 3.1: surrogate fit and high-flow bias | `figures/main_figures.ipynb` (Figure 2), `figures/supplementary_figures.ipynb` (Figure S4) | as for Figures 2 and S4 |
+| Section 3.3: effort scaling | `figures/supplementary_figures.ipynb` (Figure S7) | `outputs_flood_rl2.zip` |
+| Section 3.3: LQR-unique reaches | `figures/main_figures.ipynb` (Figure 5) | `outputs_flood_rl2.zip` |
+| Section 3.3: agreement across members | `analyses/cross_member/summarize_cross_member.py` | `outputs_basis_period.zip` |
+| Section 3.5: ensemble agreement | `figures/main_figures.ipynb` (Figure 8) | `outputs_flood_rl2.zip` |
+| Section 4.2 | `figures/figS10_huc_flexibility/make_figure.py`, `figures/supplementary_figures.ipynb` (Figure S11) | as for Figures S10 and S11 |
+
+`analyses/` also holds the scripts that produced the published CSV files and `outputs_flood_rl2/delta_atten_per_reach.parquet`
+(`huc_control`, `mass_conservation`, `ranking_stability`, `stream_order`, `surrogate_fidelity`, `attenuation_direction`).
+
+## Rerun from raw data
+
+1. `01_download_data.ipynb`, `02_process_streamflow.ipynb` and `03_process_precipitation.ipynb` download the ORNL
+   HydroSource projections (tens of GB) and write the parquet files that `04_dmd_lqr_analysis.py` reads from
+   `streamflow/` and `precipitation/` in its working directory.
+2. `python 04_dmd_lqr_analysis.py --stage all --gcm all --hydro all --rl 2`, in that folder, writes
+   `outputs_flood_rl2/` and `cache_pooled_return_levels/`.
+3. Set `FAC_RAW_ROOT` to that folder (`FAC_WORK_ROOT` holds the intermediates; see `paths.py`), run
+   `bash analyses/common/build_kernels.sh`, and follow the "Rerun from raw inputs" steps of each
+   `analyses/<name>/README.md`. Then run the scripts above on the rerun outputs (options in `--help`).
+
+## Data and license
+
+Data: Zenodo, concept DOI [10.5281/zenodo.20103438](https://doi.org/10.5281/zenodo.20103438) (resolves to the latest
+version; the record's `README.md` describes every file). Raw forcings: ORNL HydroSource CMIP6-based streamflow
+projections (doi:10.13139/OLCF/2318650), not redistributed. Code and data are licensed under CC BY 4.0 (`LICENSE`);
+cite them with `CITATION.cff`.

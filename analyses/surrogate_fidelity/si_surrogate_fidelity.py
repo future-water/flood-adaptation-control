@@ -1,5 +1,5 @@
 """
-Compute the surrogate-fidelity diagnostics consumed by FIG S1 panels (b)/(c).
+Compute the surrogate-fidelity diagnostics consumed by Figure S4 panels (b)/(c).
 
 For each (hydro, gcm, ssp) member this script
   1. loads streamflow + precipitation,
@@ -11,19 +11,21 @@ For each (hydro, gcm, ssp) member this script
   5. computes the empirical RL bias of the surrogate vs. the reference at
      RP = 2, 5, 10, 20, 50, 100 years.
 
-Output: surrogate_fidelity_summary.csv (one row per member; ~56 rows total).
+Output: surrogate_fidelity_summary.csv (one row per member; ~56 rows total), written to
+FAC_DATA_ROOT (see paths.py), where figures/supplementary_figures.ipynb reads it.
 
-Panel (a) of FIG S1 is **not** produced here — it reads the per-reach
+Panel (a) of Figure S4 is **not** produced here — it reads the per-reach
 `rl10_bias_openloop` column directly from `outputs_flood_rl2/results_*.parquet`.
 Only the basin- and order-aggregate hydrograph diagnostics needed by panels
 (b) and (c) are exported, because they cannot be derived from the per-reach
 parquet columns without re-running the surrogate (Jensen's inequality on the
 AMS-RL operator means flow-weighted reach-average ≠ basin-aggregate RL bias).
 
-Usage:
-    python si_surrogate_fidelity.py
-    python si_surrogate_fidelity.py --gcms MPI-ESM1-2-HR ACCESS-CM2
-    python si_surrogate_fidelity.py --hydros VIC5 --scenarios 245 585
+Usage (from the folder 04_dmd_lqr_analysis.py runs in, which holds streamflow/, precipitation/ and
+cache_pooled_return_levels/; the repository root in the default layout):
+    python analyses/surrogate_fidelity/si_surrogate_fidelity.py
+    python analyses/surrogate_fidelity/si_surrogate_fidelity.py --gcms MPI-ESM1-2-HR ACCESS-CM2
+    python analyses/surrogate_fidelity/si_surrogate_fidelity.py --hydros VIC5 --scenarios 245 585
 
 Run as a script (not a Jupyter cell) — each member is memory-conservative
 (<5 GB RSS), but the loop is too long for an interactive kernel.
@@ -33,6 +35,7 @@ from __future__ import annotations
 import argparse
 import gc
 import importlib
+import sys
 import warnings
 from pathlib import Path
 
@@ -42,6 +45,9 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths, 04_dmd_lqr_analysis.py)
+from paths import DATA
 
 _pipeline = importlib.import_module("04_dmd_lqr_analysis")
 RANK = _pipeline.RANK
@@ -59,10 +65,10 @@ fit_windowed_dmdc = _pipeline.fit_windowed_dmdc
 simulate_openloop = _pipeline.simulate_openloop
 
 
-SHP_PATH = Path("shape/Flowlines_huc02_12_Brazos.shp")
-DEFAULT_OUT = Path("surrogate_fidelity_summary.csv")
+SHP_PATH = DATA / "shape/Flowlines_huc02_12_Brazos.shp"
+DEFAULT_OUT = DATA / "surrogate_fidelity_summary.csv"
 RPS = [2, 5, 10, 20, 50, 100]
-NSE_THRESHOLD = 0.5  # Match figure_supp.ipynb
+NSE_THRESHOLD = 0.5  # Match figures/supplementary_figures.ipynb
 
 
 def empirical_rl(ams: np.ndarray, T: float) -> float:

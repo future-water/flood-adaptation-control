@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite it as below."
+type: software
+title: "Data-driven control reveals distributed flood adaptation priorities across large river networks"
+abstract: "Replication code for the paper of the same title: POD-DMDc-LQR flood adaptation analysis of the Brazos River network under 56 CMIP6-forced ensemble members, with the supporting analyses (analyses/) and the code of every figure and table (figures/)."
+authors:
+  - given-names: Jeil
+    family-names: Oh
+    affiliation: "The University of Texas at Austin"
+  - given-names: Matthew
+    family-names: Bartos
+    affiliation: "The University of Texas at Austin"
+version: 1.1.0
+license: CC-BY-4.0
+repository-code: "https://github.com/future-water/flood-adaptation-control"
+doi: 10.5281/zenodo.20103438
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.20103438
+    description: "Zenodo concept DOI (all versions; resolves to the latest)"
+  - type: doi
+    value: 10.5281/zenodo.20576488
+    description: "Zenodo version DOI cited in the paper (code and pipeline outputs)"

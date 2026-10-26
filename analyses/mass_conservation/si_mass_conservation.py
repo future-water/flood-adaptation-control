@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Supplementary: Mass Conservation Diagnostic + Fig S2
+Supplementary: Mass Conservation Diagnostic + Fig S5
 =====================================================
 
-Produces mass_conservation_summary.csv and plots Fig S2 (Surrogate Mass Fidelity).
-Used by 06_figures_supplementary.ipynb.
+Produces mass_conservation_summary.csv and plots Fig S5 (Surrogate Mass Fidelity).
+Used by figures/supplementary_figures.ipynb.
 
 Diagnostics:
   1) Open-loop mass fidelity: surrogate vs RAPID basin-total
@@ -14,14 +14,20 @@ Diagnostics:
   4) Per-reach δ tracking
   5) Physical feasibility: |u_i(t)| vs x_i(t)
 
-Usage:
-    python si_mass_conservation.py --gcm ACCESS-CM2 --hydro VIC5 --ssp 245
-    python si_mass_conservation.py --gcm all --hydro all --ssp all
+Usage (from the folder 04_dmd_lqr_analysis.py runs in, which holds streamflow/, precipitation/ and
+cache_pooled_return_levels/; the repository root in the default layout):
+    python analyses/mass_conservation/si_mass_conservation.py --gcm ACCESS-CM2 --hydro VIC5 --ssp 245
+    python analyses/mass_conservation/si_mass_conservation.py --gcm all --hydro all --ssp all
+
+Outputs: mass_conservation_summary.csv in FAC_DATA_ROOT (rows merged by gcm, hydro, ssp; read by the
+notebook), per-member diagnostic plots in FAC_OUT_ROOT/mass_conservation/, figS5_mass_fidelity.{png,pdf}
+in FAC_OUT_ROOT/figures/ (see paths.py).
 """
 
 from __future__ import annotations
 
 import os
+import sys
 import gc
 import argparse
 import warnings
@@ -37,6 +43,9 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
 warnings.filterwarnings("ignore")
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths, 04_dmd_lqr_analysis.py)
+from paths import DATA, out
 
 import importlib
 _pipeline = importlib.import_module("04_dmd_lqr_analysis")
@@ -62,7 +71,7 @@ PODPack                = _pipeline.PODPack
 DMDcPack               = _pipeline.DMDcPack
 ReferencePack          = _pipeline.ReferencePack
 
-OUT_DIR = Path("outputs_mass_conservation")
+OUT_DIR = out("mass_conservation")
 OUT_DIR.mkdir(exist_ok=True, parents=True)
 
 # Test clipping across multiple R_w to show it shrinks with less aggressive control
@@ -813,7 +822,7 @@ def run_diagnostic(gcm: str, hydro: str, ssp: int):
     return summary_row
 
 
-SUMMARY_CSV = Path("mass_conservation_summary.csv")
+SUMMARY_CSV = DATA / "mass_conservation_summary.csv"
 
 
 def _load_existing_summary() -> pd.DataFrame:
@@ -871,7 +880,7 @@ def main():
         ssps = [int(s.strip()) for s in args.ssp.split(",")]
 
     print(f"\n{'='*70}")
-    print(f"  MASS CONSERVATION DIAGNOSTIC v4")
+    print(f"  MASS CONSERVATION DIAGNOSTIC")
     print(f"  GCMs:  {gcms}")
     print(f"  Hydro: {hydros}")
     print(f"  SSPs:  {ssps}")
@@ -909,10 +918,10 @@ def main():
 
 
 # ============================================================
-# FIG S2 — Surrogate Mass Fidelity (1×3)
+# FIG S5 — Surrogate Mass Fidelity (1×3)
 # ============================================================
 
-FIG_DIR = Path("figures_wrr_new")
+FIG_DIR = out("figures")
 
 SSP_LABELS = {126:"SSP1-2.6", 245:"SSP2-4.5", 370:"SSP3-7.0", 585:"SSP5-8.5"}
 SSP_COLORS = {126:"#2d8e3d", 245:"#2166AC", 370:"#d4820a", 585:"#c72e29"}
@@ -932,8 +941,8 @@ def _dot_whisker(ax, x_pos, values, color, lw=2.0, ms=7):
     return med
 
 
-def plot_figS2(csv_path=None):
-    """Plot FIG S2 — per-SSP dot-whisker: vol ratio, δ consistency, per-reach δ."""
+def plot_figS5(csv_path=None):
+    """Plot FIG S5 — per-SSP dot-whisker: vol ratio, δ consistency, per-reach δ."""
     import matplotlib as mpl
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     MM = 1/25.4; W_FULL = 190*MM
@@ -1034,14 +1043,14 @@ def plot_figS2(csv_path=None):
     ax.set_xlim(-0.5, len(scenarios)-0.5); ax.set_ylim(-0.05, 1.05)
     lgrid(ax); plabel(ax, "c")
 
-    for ext in ("png","pdf"): fig.savefig(FIG_DIR/f"figS2_mass_fidelity.{ext}")
+    for ext in ("png","pdf"): fig.savefig(FIG_DIR/f"figS5_mass_fidelity.{ext}")
     plt.close(fig)
-    print(f"  Saved figS2_mass_fidelity to {FIG_DIR}")
+    print(f"  Saved figS5_mass_fidelity to {FIG_DIR}")
 
 
 if __name__ == "__main__":
     main()
     # Plot if summary CSV exists
     if SUMMARY_CSV.exists():
-        print(f"\nPlotting FIG S2...")
-        plot_figS2()
+        print(f"\nPlotting FIG S5...")
+        plot_figS5()

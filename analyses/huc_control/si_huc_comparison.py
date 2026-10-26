@@ -3,18 +3,21 @@ Supplementary: HUC-Level Control Constraint Comparison
 ======================================================
 
 Compares reach-level vs HUC-aggregated (HUC8/10/12) control placement.
-Produces per-member CSVs and spatial compact output for Fig S (HUC Flexibility).
-Used by 06_figures_supplementary.ipynb.
+Produces per-member CSVs in FAC_DATA_ROOT/outputs_huc_comparison/ (or --outdir); si_huc_aggregate.py
+turns them into huc_spatial_compact.csv for Figure S10 (HUC flexibility).
 
-Requires comid_huc_mapping_correct.csv (from WBD spatial join).
+Requires comid_huc_mapping_correct.csv (from WBD spatial join) in FAC_DATA_ROOT, or --mapping.
+Run from the folder 04_dmd_lqr_analysis.py runs in (streamflow/, precipitation/ and
+cache_pooled_return_levels/; the repository root in the default layout).
 
 Usage:
-    python si_huc_comparison.py --gcm EC-Earth3 --hydro VIC5 --scenario 245
+    python analyses/huc_control/si_huc_comparison.py --gcm EC-Earth3 --hydro VIC5 --scenario 245
 """
 
 from __future__ import annotations
 
 import gc
+import sys
 import argparse
 import importlib
 import warnings
@@ -28,6 +31,8 @@ from scipy.linalg import solve_discrete_are
 warnings.filterwarnings("ignore")
 
 # Import main pipeline (04_dmd_lqr_analysis.py)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths, 04_dmd_lqr_analysis.py)
+from paths import DATA
 _pipeline = importlib.import_module("04_dmd_lqr_analysis")
 
 RANK       = _pipeline.RANK
@@ -64,7 +69,8 @@ PrecompPack   = _pipeline.PrecompPack
 # 1. HUC Mapping (from pre-computed WBD spatial join CSV)
 # ============================================================
 
-MAPPING_CSV = "comid_huc_mapping_correct.csv"
+MAPPING_CSV = str(DATA / "comid_huc_mapping_correct.csv")
+OUT_DIR = str(DATA / "outputs_huc_comparison")
 
 
 def build_huc_mapping(comid_list: np.ndarray, mapping_csv: str = MAPPING_CSV) -> pd.DataFrame:
@@ -275,7 +281,7 @@ def run_huc_comparison(
     scn: int,
     huc_levels: List[str] = ['reach', 'HUC12', 'HUC10', 'HUC8'],
     mapping_csv: str = MAPPING_CSV,
-    out_dir: str = "outputs_huc_comparison",
+    out_dir: str = OUT_DIR,
 ):
     """Compare control across multiple HUC resolutions for one (GCM, hydro, scenario)."""
     print(f"\n{'='*70}")
@@ -412,7 +418,7 @@ def main():
     parser.add_argument("--scenario", type=int, default=245)
     parser.add_argument("--levels", nargs='+', default=['reach', 'HUC12', 'HUC10', 'HUC8'])
     parser.add_argument("--mapping", default=MAPPING_CSV)
-    parser.add_argument("--outdir", default="outputs_huc_comparison")
+    parser.add_argument("--outdir", default=OUT_DIR)
     args = parser.parse_args()
 
     run_huc_comparison(

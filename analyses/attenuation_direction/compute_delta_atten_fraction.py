@@ -6,13 +6,17 @@ where δ_i(t) = max(x_cl_i(t), 0) - max(x_ol_i(t), 0)
 This replaces the raw-u_i-based atten_fraction with a metric that
 reflects actual flow change after dynamics propagation + clipping.
 
-Usage:
-    python compute_delta_atten_fraction.py --rl 2
-    python compute_delta_atten_fraction.py --rl 2 --gcm ACCESS-CM2 --hydro VIC5
+Usage (from the folder 04_dmd_lqr_analysis.py runs in, which holds streamflow/, precipitation/ and
+cache_pooled_return_levels/; the repository root in the default layout):
+    python analyses/attenuation_direction/compute_delta_atten_fraction.py --rl 2
+    python analyses/attenuation_direction/compute_delta_atten_fraction.py --rl 2 --gcm ACCESS-CM2 --hydro VIC5
+
+Writes delta_atten_per_reach.parquet (read by figures/supplementary_figures.ipynb, Figure S11) and
+delta_atten_summary.csv to FAC_DATA_ROOT/outputs_flood_rl<rl>/, or to --output.
 """
 
 from __future__ import annotations
-import os, gc, argparse, warnings, time
+import os, sys, gc, argparse, warnings, time
 from pathlib import Path
 from typing import List, Dict, Tuple
 import numpy as np
@@ -21,6 +25,8 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 
 # ── Import pipeline ──────────────────────────────────────────
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))   # repository root (paths, 04_dmd_lqr_analysis.py)
+from paths import DATA
 import importlib as _il
 _pipeline = _il.import_module('04_dmd_lqr_analysis')
 SCENARIOS = _pipeline.SCENARIOS
@@ -360,7 +366,8 @@ def main():
     parser.add_argument("--gcm", default="all")
     parser.add_argument("--hydro", default="all")
     parser.add_argument("--budget", type=float, default=10.0)
-    parser.add_argument("--output", default=None)
+    parser.add_argument("--output", default=None,
+                        help="Output folder (default: FAC_DATA_ROOT/outputs_flood_rl<rl>)")
     args = parser.parse_args()
 
     pipeline = _pipeline
@@ -370,8 +377,8 @@ def main():
     global TARGET_BUDGET
     TARGET_BUDGET = args.budget
 
-    out_dir = Path(f"outputs_flood_rl{args.rl}")
-    out_dir.mkdir(exist_ok=True)
+    out_dir = Path(args.output) if args.output else DATA / f"outputs_flood_rl{args.rl}"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     gcms   = AVAILABLE_GCMS if args.gcm == "all" else [args.gcm]
     hydros = HYDRO_MODELS if args.hydro == "all" else [args.hydro]
